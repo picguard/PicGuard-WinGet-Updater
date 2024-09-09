@@ -1,0 +1,115 @@
+name: PR Beta
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        type: string
+        description: "Which tag are you using? (ex: v1.0.0+0)"
+        required: true
+      is_pr:
+        type: boolean
+        description: "Whether to create a pr to the microsoft/winget-pkgs? (default to false)"
+        default: false
+        required: false
+
+jobs:
+  get_version:
+    name: Get version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version_step.outputs.version }}
+      release: ${{ steps.version_step.outputs.release }}
+    steps:
+      - name: Set version
+        id: version_step
+        run: |
+          RELEASE=$(echo "$TAG_NAME" | sed -e "s/v//")
+          VERSION=$(echo "$TAG_NAME" | sed -e "s/v//" -e "s/+/./")
+
+          echo "release=RELEASE" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        env:
+          TAG_NAME: ${{ inputs.tag_name }}
+
+      - name: Check versions
+        run: |
+          echo "release: RELEASE"
+          echo "version: $VERSION"
+        env:
+          RELEASE: ${{ steps.version_step.outputs.release }}
+          VERSION: ${{ steps.version_step.outputs.version }}
+
+  generate:
+    uses: ./.github/workflows/gen-beta.yml
+    needs: get_version
+    with:
+      tag_name: ${{ inputs.tag_name }}
+
+  commit:
+    needs:
+      - get_version
+      - generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.repository_owner }}/winget-pkgs
+          sparse-checkout: |
+            manifests/i/Insco
+            .gitattributes
+            .gitignore
+          token: ${{ secrets.PAT }}
+
+      - name: Pull & Push
+        run: |
+          git remote add upstream https://github.com/microsoft/winget-pkgs
+          echo "::group::pull"
+          git pull upstream master
+          echo "::endgroup::"
+          git push
+
+      - name: Create branch
+        run: |
+          git branch Insco.PicGuard.Beta-${{ needs.get_version.outputs.version }}
+          git switch Insco.PicGuard.Beta-${{ needs.get_version.outputs.version }}
+
+      - name: Recreate directory
+        run: |
+          rm -rf manifests/i/Insco/PicGuard/Beta
+          mkdir -pv manifests/i/Insco/PicGuard/Beta/${{ needs.get_version.outputs.version }}
+
+      - name: Download a Build Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: manifest-${{ inputs.tag_name }}.pre
+          path: manifests/i/Insco/PicGuard/Beta/${{ needs.get_version.outputs.version }}
+
+      - name: Commit & Push
+        run: |
+          git config --global user.email "${{ vars.GIT_EMAIL }}"
+          git config --global user.name "${{ vars.GIT_NAME }}"
+          git config --global core.autocrlf false
+          git add .
+          git commit -m "New version: Insco.PicGuard.Beta version ${{ needs.get_version.outputs.version }}"
+          git push --set-upstream origin Insco.PicGuard.Beta-${{ needs.get_version.outputs.version }}
+
+  pr:
+    if: ${{ inputs.is_pr == 'true' }}
+    needs:
+      - get_version
+      - commit
+    runs-on: ubuntu-latest
+    environment: 
+      name: Deploy-Pull-Request-Beta
+    steps:
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.PAT }}
+        run: |
+          gh pr create \
+            --repo https://github.com/microsoft/winget-pkgs \
+            --base master \
+            --head ${{ github.repository_owner }}:Insco.PicGuard.Beta-${{ needs.get_version.outputs.version }} \
+            --title "New version: Insco.PicGuard.Beta version ${{ needs.get_version.outputs.version }}" \
+            --body "### Pull request created by [PicGuard-WinGet-Auto-Updater](https://github.com/${{ github.repository }}) workflow run [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }})"
