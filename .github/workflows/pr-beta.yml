@@ -112,4 +112,4 @@ jobs:
             --base master \
             --head ${{ github.repository_owner }}:Insco.PicGuard.Beta-${{ needs.get_version.outputs.version }} \
             --title "New version: Insco.PicGuard.Beta version ${{ needs.get_version.outputs.version }}" \
-            --body "### Pull request created by [PicGuard-WinGet-Auto-Updater](https://github.com/${{ github.repository }}) workflow run [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }})"
+            --body "### Pull request created by [PicGuard-WinGet-Updater](https://github.com/${{ github.repository }}) workflow run [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }})"
