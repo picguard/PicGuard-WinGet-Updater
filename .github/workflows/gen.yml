@@ -28,14 +28,14 @@ jobs:
           RELEASE=$(echo "$TAG_NAME" | sed -e "s/v//")
           VERSION=$(echo "$TAG_NAME" | sed -e "s/v//" -e "s/+/./")
           
-          echo "release=RELEASE" >> $GITHUB_OUTPUT
+          echo "release=$RELEASE" >> $GITHUB_OUTPUT
           echo "version=$VERSION" >> $GITHUB_OUTPUT
         env:
           TAG_NAME: ${{ inputs.tag_name }}
 
       - name: Check versions
         run: |
-          echo "release: RELEASE"
+          echo "release: $RELEASE"
           echo "version: $VERSION"
         env:
           RELEASE: ${{ steps.version_step.outputs.release }}
@@ -59,17 +59,15 @@ jobs:
       - name: Get SHA256
         id: sha256
         run: |
-          # https://github.com/picguard/picguard/releases/download/v1.0.1%2B405/picguard_1.0.1+405_windows_x64_en-US.msi
-          # https://github.com/picguard/picguard/releases/download/v1.0.1%2B405/picguard_1.0.1+405_windows_x64_zh-CN.msi
-          curl -fOL https://github.com/picguard/picguard/releases/download/v${{ needs.get_version.outputs.release }}/picguard_${{ needs.get_version.outputs.release }}_windows_x64_en-US.msi
-          curl -fOL https://github.com/picguard/picguard/releases/download/v${{ needs.get_version.outputs.release }}/picguard_${{ needs.get_version.outputs.release }}_windows_x64_zh-CN.msi
+          curl -H "Authorization: Bearer ${{ secrets.PG_RELEASE_TOKEN }}" -fOL https://github.com/picguard/picguard/releases/download/v${{ needs.get_version.outputs.release }}/picguard_${{ needs.get_version.outputs.release }}_windows_x64_en-US.msi
+          curl -H "Authorization: Bearer ${{ secrets.PG_RELEASE_TOKEN }}" -fOL https://github.com/picguard/picguard/releases/download/v${{ needs.get_version.outputs.release }}/picguard_${{ needs.get_version.outputs.release }}_windows_x64_zh-CN.msi
           
           echo "ensha256=$(sha256sum picguard_${{ needs.get_version.outputs.release }}_windows_x64_en-US.msi | cut -c 1-64 | tr '[:lower:]' '[:upper:]')" >> $GITHUB_OUTPUT
           echo "zhsha256=$(sha256sum picguard_${{ needs.get_version.outputs.release }}_windows_x64_zh-CN.msi | cut -c 1-64 | tr '[:lower:]' '[:upper:]')" >> $GITHUB_OUTPUT
           
           # msiinfo export picguard_1.0.1+405_windows_x64_en-US.msi Property | sed -n 's/^ProductCode\s\+//p'
-          echo "enproductcode=$(msiinfo export picguard_${{ needs.get_version.outputs.release }}_windows_x64_en-US.msi Property | sed -n 's/^ProductCode\s\+//p')" >> $GITHUB_OUTPUT
-          echo "zhproductcode=$(msiinfo export picguard_${{ needs.get_version.outputs.release }}_windows_x64_zh-CN.msi Property | sed -n 's/^ProductCode\s\+//p')" >> $GITHUB_OUTPUT
+          echo "enproductcode=$(msiinfo export picguard_${{ needs.get_version.outputs.release }}_windows_x64_en-US.msi Property | sed -n 's/^ProductCode\s\+//p' | cut -c 1-38)" >> $GITHUB_OUTPUT
+          echo "zhproductcode=$(msiinfo export picguard_${{ needs.get_version.outputs.release }}_windows_x64_zh-CN.msi Property | sed -n 's/^ProductCode\s\+//p' | cut -c 1-38)" >> $GITHUB_OUTPUT
 
       - name: Get ReleaseDate
         id: date
@@ -96,8 +94,8 @@ jobs:
           sed -i 's/${releasedate}/${{ steps.date.outputs.releasedate }}/' ./stable/Insco.PicGuard.installer.yaml
           sed -i 's/${ensha256}/${{ steps.sha256.outputs.ensha256 }}/' ./stable/Insco.PicGuard.installer.yaml
           sed -i 's/${zhsha256}/${{ steps.sha256.outputs.zhsha256 }}/' ./stable/Insco.PicGuard.installer.yaml
-          sed -i 's/${enproductcode}/${{ steps.sha256.outputs.enproductcode }}/g' ./stable/Insco.PicGuard.installer.yaml
-          sed -i 's/${zhproductcode}/${{ needs.sha256.outputs.zhproductcode }}/g' ./stable/Insco.PicGuard.installer.yaml
+          sed -i "s/'\${enproductcode}'/'${{ steps.sha256.outputs.enproductcode }}'/g" ./stable/Insco.PicGuard.installer.yaml
+          sed -i "s/'\${zhproductcode}'/'${{ steps.sha256.outputs.zhproductcode }}'/g" ./stable/Insco.PicGuard.installer.yaml
           
           sed -i 's/${version}/${{ needs.get_version.outputs.version }}/' ./stable/Insco.PicGuard.locale.en-US.yaml
           sed -i 's/${release}/${{ needs.get_version.outputs.release }}/' ./stable/Insco.PicGuard.locale.en-US.yaml
