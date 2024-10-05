@@ -90,7 +90,7 @@ jobs:
           git push --set-upstream origin Insco.PicGuard-${{ needs.get_version.outputs.version }}
 
   pr:
-    if: ${{ inputs.is_pr == 'true' }}
+    if: ${{ inputs.is_pr }}
     needs:
       - get_version
       - commit
