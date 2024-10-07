@@ -4,13 +4,13 @@
 PackageIdentifier: Insco.PicGuard.Beta
 PackageVersion: ${version}
 PackageLocale: zh-CN
-Publisher: INSCO LLC
-PublisherUrl: https://picguard.app
+Publisher: Insco LLC
+PublisherUrl: https://www.picguard.app
 PublisherSupportUrl: https://github.com/picguard/picguard/discussions
 PrivacyUrl: https://www.picguard.app/zh/legal/privacy
 Author: kjxbyz
 PackageName: PicGuard Beta
-PackageUrl: https://picguard.app
+PackageUrl: https://www.picguard.app
 License: MIT
 LicenseUrl: https://raw.githubusercontent.com/picguard/picguard/main/LICENSE
 Copyright: Copyright (c) 2023 kjxbyz
