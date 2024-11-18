@@ -1,4 +1,4 @@
-name: PR
+name: Remove Version
 
 on:
   workflow_dispatch:
@@ -35,16 +35,9 @@ jobs:
         env:
           TAG_NAME: ${{ inputs.tag_name }}
 
-  generate:
-    uses: ./.github/workflows/gen.yml
-    needs: get_version
-    with:
-      tag_name: ${{ inputs.tag_name }}
-
   commit:
     needs:
       - get_version
-      - generate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -66,14 +59,11 @@ jobs:
 
       - name: Create branch
         run: |
-          git branch Insco.PicGuard-${{ needs.get_version.outputs.version }}
-          git switch Insco.PicGuard-${{ needs.get_version.outputs.version }}
+          git branch Remove-Insco.PicGuard-${{ needs.get_version.outputs.version }}
+          git switch Remove-Insco.PicGuard-${{ needs.get_version.outputs.version }}
 
-      - name: Download a Build Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: manifest-${{ inputs.tag_name }}
-          path: manifests/i/Insco/PicGuard/${{ needs.get_version.outputs.version }}
+      - name: Remove version
+        run: rm -rf manifests/i/Insco/PicGuard/${{ needs.get_version.outputs.version }}
 
       - name: Commit & Push
         run: |
@@ -81,8 +71,8 @@ jobs:
           git config --global user.name "${{ vars.GIT_NAME }}"
           git config --global core.autocrlf false
           git add .
-          git commit -m "New version: Insco.PicGuard version ${{ needs.get_version.outputs.version }}"
-          git push --set-upstream origin Insco.PicGuard-${{ needs.get_version.outputs.version }}
+          git commit -m "Remove version: Insco.PicGuard version ${{ needs.get_version.outputs.version }}"
+          git push --set-upstream origin Remove-Insco.PicGuard-${{ needs.get_version.outputs.version }}
 
   pr:
     if: ${{ inputs.is_pr }}
@@ -100,6 +90,6 @@ jobs:
           gh pr create \
             --repo https://github.com/microsoft/winget-pkgs \
             --base master \
-            --head ${{ github.repository_owner }}:Insco.PicGuard-${{ needs.get_version.outputs.version }} \
-            --title "New version: Insco.PicGuard version ${{ needs.get_version.outputs.version }}" \
+            --head ${{ github.repository_owner }}:Remove-Insco.PicGuard-${{ needs.get_version.outputs.version }} \
+            --title "Remove version: Insco.PicGuard version ${{ needs.get_version.outputs.version }}" \
             --body "### Pull request created by [PicGuard-WinGet-Updater](https://github.com/${{ github.repository }}) workflow run [#${{ github.run_number }}](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/attempts/${{ github.run_attempt }})"
