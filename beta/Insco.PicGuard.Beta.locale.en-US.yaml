@@ -11,7 +11,7 @@ PrivacyUrl: https://www.picguard.app/en/legal/privacy
 Author: kjxbyz
 PackageName: PicGuard Beta
 PackageUrl: https://www.picguard.app
-License: MIT
+License: GPL-3.0
 LicenseUrl: https://raw.githubusercontent.com/picguard/picguard/main/LICENSE
 Copyright: Copyright (c) 2023 kjxbyz
 ShortDescription: Your pictures, your signature.
