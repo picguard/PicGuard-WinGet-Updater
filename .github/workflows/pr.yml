@@ -16,7 +16,7 @@ on:
 jobs:
   get_version:
     name: Get version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       version: ${{ steps.version_step.outputs.version }}
       release: ${{ steps.version_step.outputs.release }}
@@ -45,7 +45,7 @@ jobs:
     needs:
       - get_version
       - generate
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
         with:
@@ -89,7 +89,7 @@ jobs:
     needs:
       - get_version
       - commit
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     environment: 
       name: Deploy-Pull-Request
     steps:

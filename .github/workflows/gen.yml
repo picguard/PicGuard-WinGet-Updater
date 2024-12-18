@@ -17,7 +17,7 @@ on:
 jobs:
   get_version:
     name: Get version
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       version: ${{ steps.version_step.outputs.version }}
       release: ${{ steps.version_step.outputs.release }}
@@ -37,7 +37,7 @@ jobs:
           TAG_NAME: ${{ inputs.tag_name }}
 
   generate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: get_version
     steps:
       - uses: actions/checkout@v4
